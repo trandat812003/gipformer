@@ -18,6 +18,11 @@ awk -F',' 'BEGIN{OFS=","} NR==1{print; next} {$1="bidv/audio/"$1; print}' data.c
 awk -F',' 'BEGIN{OFS=","} NR==1{print; next} {$1=$1".wav"; print}' data.csv > tmp.csv && mv tmp.csv data.csv
 ```
 
+```bash
+ln -s /tmp/icefall/icefall icefall
+ln -s /tmp/icefall/egs egs
+```
+
 # finetune
 ```bash
 export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/egs:/home/trandat/Documents/gipformer/egs/librispeech/ASR/zipformer:$PYTHONPATH
