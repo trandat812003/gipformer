@@ -1,7 +1,6 @@
 # requirements
 ```bash
-cd /tmp
-git clone https://github.com/k2-fsa/icefall
+git clone https://github.com/k2-fsa/icefall /tmp/icefall
 
 uv pip install torch==1.13.0+cu116 torchaudio==0.13.0+cu116 -f https://download.pytorch.org/whl/torch_stable.html
 
