@@ -1,5 +1,5 @@
 '''
-export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/egs:$PYTHONPATH
+export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/egs:/home/trandat/Documents/gipformer/egs/librispeech/ASR/zipformer:$PYTHONPATH
 
 # Fine-tune without mux (i.e not mixing with original training data):
 python -m src.trainning.gipformer \

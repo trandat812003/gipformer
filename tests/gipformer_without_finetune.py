@@ -2,7 +2,7 @@
 export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/icefall/egs/librispeech/ASR:/home/trandat/Documents/gipformer/icefall/egs/librispeech/ASR/zipformer:$PYTHONPATH
 
 AUDIO_DIR=/media/trandat/Data \
-INPUT_CSV=/home/trandat/Documents/gipformer/dataset/test.csv \
+INPUT_CSV=/home/trandat/Documents/gipformer/dataset/data.gipformer.test.csv \
 python -m tests.gipformer_without_finetune
 '''
 
@@ -27,12 +27,13 @@ from src.utils.nomalize_text import normalize_text
 
 
 def main():
-    AUDIO_DIR = os.environ.get("AUDIO_DIR", "/media/trandat/Data")
-    input_csv = os.environ["INPUT_CSV"]
-    output_csv = os.environ.get("OUTPUT_CSV", f"./outputs/{datetime.now().strftime('%Y%m%d_%H-%M')}/predictions.csv")
+    AUDIO_DIR = "/media/trandat/Data"
+    input_csv = "/home/trandat/Documents/gipformer/dataset/data.segments.csv"
+    output_csv = f"./outputs/{datetime.now().strftime('%Y%m%d_%H-%M')}/predictions.csv"
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 
     df = pd.read_csv(input_csv).fillna("")
+    df = df.iloc[581:]
 
     model, sp, fbank, device = load_model()
 

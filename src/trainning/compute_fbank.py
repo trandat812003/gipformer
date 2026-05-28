@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 '''
-export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/icefall/egs/librispeech/ASR:/home/trandat/Documents/gipformer/icefall/egs/librispeech/ASR/zipformer:$PYTHONPATH
-
-INPUT_CSV=/home/trandat/Documents/gipformer/dataset/data.gipformer.train.csv \
-BPE_MODEL=/media/trandat/Data/model/gipformer/bpe.model \
-AUDIO_DIR=/media/trandat/Data \
 python -m src.trainning.compute_fbank
 '''
 
@@ -28,83 +23,63 @@ from lhotse import (
 )
 
 from icefall.utils import get_executor
+from src.utils.nomalize_text import pre_process
 
 torch.set_num_threads(1)
 torch.set_num_interop_threads(1)
 
 
-INPUT_CSV = os.environ["INPUT_CSV"]
-OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "data/")
-BPE_MODEL = os.environ.get("BPE_MODEL", "/media/trandat/Data/model/gipformer/bpe.model")
-AUDIO_DIR = os.environ.get("AUDIO_DIR", "/media/trandat/Data")
+INPUT_CSV = "./dataset/data.segments.csv"
+AUDIO_DIR = "/media/trandat/Data"
+OUTPUT_DIR = Path("./data/")
+MANIFESTS_DIR = OUTPUT_DIR / "manifests"
+FBANK_DIR = OUTPUT_DIR / "fbank"
 
-os.makedirs(os.path.dirname(OUTPUT_DIR), exist_ok=True)
+MANIFESTS_DIR.mkdir(parents=True, exist_ok=True)
+FBANK_DIR.mkdir(parents=True, exist_ok=True)
+
+BPE_MODEL = "/media/trandat/Data/model/gipformer/bpe.model"
+sp = spm.SentencePieceProcessor()
+sp.load(BPE_MODEL)
+
 csv_name = Path(INPUT_CSV).stem
 
-def create_cutset_from_csv(csv_path):
-    df = pd.read_csv(csv_path)
+def create_cutset(df):
 
     recordings = []
     supervisions = []
 
     for idx, row in df.iterrows():
-        wav_path = AUDIO_DIR + "/" +row["file_path"]
 
-        recording = Recording.from_file(
-            wav_path,
-            # recording_id=str(idx),
-        )
+        wav_path = Path(AUDIO_DIR) / str(row["file_path"])
+
+        recording = Recording.from_file(wav_path)
 
         supervision = SupervisionSegment(
             id=str(idx),
             recording_id=recording.id,
             start=0.0,
             duration=recording.duration,
-            text=str(row["text"]),
-            # channel=int(row["channel"]),
+            text=str(pre_process(row["text"])),
         )
 
         recordings.append(recording)
         supervisions.append(supervision)
 
-    recording_set = RecordingSet.from_recordings(recordings)
-    supervision_set = SupervisionSet.from_segments(supervisions)
-
-    cut_set = CutSet.from_manifests(
-        recordings=recording_set,
-        supervisions=supervision_set,
+    return CutSet.from_manifests(
+        recordings=RecordingSet.from_recordings(recordings),
+        supervisions=SupervisionSet.from_segments(supervisions),
     )
-
-    return cut_set
 
 
 def compute_fbank(
-    csv_path,
-    output_dir,
-    bpe_model=None,
+    df,
+    name,
     perturb_speed=False,
 ):
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    manifests_dir = output_dir / "manifests"
-    manifests_dir.mkdir(parents=True, exist_ok=True)
-
-    num_jobs = 15
-    num_mel_bins = 80
-
-    if bpe_model:
-        logging.info(f"Loading {bpe_model}")
-
-        sp = spm.SentencePieceProcessor()
-        sp.load(bpe_model)
-
-    logging.info("Creating CutSet from CSV")
-    cut_set = create_cutset_from_csv(csv_path)
+    cut_set = create_cutset(df)
 
     if perturb_speed:
-        logging.info("Applying speed perturb")
-
         cut_set = (
             cut_set
             + cut_set.perturb_speed(0.9)
@@ -113,34 +88,36 @@ def compute_fbank(
 
     cut_set = cut_set.resample(16000)
 
-    extractor = Fbank(FbankConfig(num_mel_bins=num_mel_bins))
+    extractor = Fbank(FbankConfig(num_mel_bins=80))
 
     with get_executor() as ex:
         cut_set = cut_set.compute_and_store_features(
             extractor=extractor,
-            storage_path=output_dir / "fbank" / csv_name,
-            num_jobs=num_jobs if ex is None else 80,
-            executor=ex,
+            storage_path=FBANK_DIR / name,
             storage_type=LilcomChunkyWriter,
+            num_jobs=15 if ex is None else 80,
+            executor=ex,
         )
 
-    manifest_path = manifests_dir / f"{csv_name}.jsonl.gz"
-    cut_set.to_file(manifest_path)
+    cut_set.to_file(MANIFESTS_DIR / f"{name}.jsonl.gz")
 
-    logging.info("Done")
+    logging.info(f"Done: {name}")
 
 
 if __name__ == "__main__":
-    formatter = (
-        "%(asctime)s %(levelname)s "
-        "[%(filename)s:%(lineno)d] %(message)s"
+    logging.basicConfig(
+        level=logging.INFO,
+        format=(
+            "%(asctime)s %(levelname)s "
+            "[%(filename)s:%(lineno)d] %(message)s"
+        ),
     )
 
-    logging.basicConfig(format=formatter, level=logging.INFO)
+    df = pd.read_csv(INPUT_CSV)
 
-    compute_fbank(
-        csv_path=INPUT_CSV,
-        output_dir=OUTPUT_DIR,
-        bpe_model=BPE_MODEL,
-        perturb_speed=True,
-    )
+    n_train = 581
+    train_df = df.iloc[:n_train]
+    test_df = df.iloc[n_train:]
+
+    compute_fbank(train_df, "train", perturb_speed=True)
+    compute_fbank(test_df, "test", perturb_speed=False)

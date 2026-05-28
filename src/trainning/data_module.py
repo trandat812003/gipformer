@@ -248,10 +248,7 @@ class CustomAsrDataModule:
 
         return train_dl
 
-    def valid_dataloaders(
-        self,
-        cuts_valid: CutSet,
-    ) -> DataLoader:
+    def valid_dataloaders(self, cuts_valid: CutSet) -> DataLoader:
 
         transforms = []
 
@@ -327,30 +324,21 @@ class CustomAsrDataModule:
 
     @lru_cache()
     def load_manifest(self, manifest_filename: str) -> CutSet:
-
         manifest_path = self.args.manifest_dir / manifest_filename
-
         logging.info(f"Loading manifest: {manifest_path}")
-
         return load_manifest_lazy(manifest_path)
 
     @lru_cache()
     def train_cuts(self) -> CutSet:
-        return self.load_manifest(
-            "data.gipformer.train.jsonl.gz"
-        )
+        return self.load_manifest("train.jsonl.gz")
 
     @lru_cache()
     def valid_cuts(self) -> CutSet:
-        return self.load_manifest(
-            "data.gipformer.test.jsonl.gz"
-        )
+        return self.load_manifest("test.jsonl.gz")
 
     @lru_cache()
     def test_cuts(self) -> CutSet:
-        return self.load_manifest(
-            "data.gipformer.test.jsonl.gz"
-        )
+        return self.load_manifest("test.jsonl.gz")
     
 def remove_short_and_long_utt(sp ,c: Cut):
     # Keep only utterances with duration between 1 second and 20 seconds

@@ -1,18 +1,15 @@
 # requirements
 ```bash
-pip install git+https://github.com/lhotse-speech/lhotse
-
 cd /tmp
 git clone https://github.com/k2-fsa/icefall
-cd icefall
-pip install -r requirements.txt
-export PYTHONPATH=/tmp/icefall:$PYTHONPATH
 
 uv pip install torch==1.13.0+cu116 torchaudio==0.13.0+cu116 -f https://download.pytorch.org/whl/torch_stable.html
 
 uv pip install k2==1.24.3.dev20230725+cuda11.6.torch1.13.0 -f https://k2-fsa.github.io/k2/cuda.html
 
 uv pip install git+https://github.com/lhotse-speech/lhotse
+
+uv pip install -r requirement.txt
 ```
 
 # preprocess
@@ -24,7 +21,7 @@ awk -F',' 'BEGIN{OFS=","} NR==1{print; next} {$1=$1".wav"; print}' data.csv > tm
 
 # finetune
 ```bash
-export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/icefall/egs/librispeech/ASR:/home/trandat/Documents/gipformer/icefall/egs/librispeech/ASR/zipformer:$PYTHONPATH
+export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/egs:/home/trandat/Documents/gipformer/egs/librispeech/ASR/zipformer:$PYTHONPATH
 ```
 
 ```bash

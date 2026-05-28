@@ -1,6 +1,4 @@
 '''
-INPUT_CSV=/home/trandat/Documents/gipformer/dataset/data.csv \
-AUDIO_DIR=/media/trandat/Data \
 python dataset/cut_audio.py
 '''
 
@@ -14,17 +12,13 @@ import pandas as pd
 from tqdm import tqdm
 
 
-INPUT_CSV = os.environ["INPUT_CSV"]
-AUDIO_DIR = os.environ.get("AUDIO_DIR", ".")
-OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "/media/trandat/Data/bidv")
-
+INPUT_CSV = "/home/trandat/Documents/gipformer/dataset/data.csv"
+AUDIO_DIR = "/media/trandat/Data"
+OUTPUT_DIR = "/media/trandat/Data/bidv"
+OUTPUT_CSV = "/home/trandat/Documents/gipformer/dataset/data.segments.csv"
 
 output_audio_dir = Path(OUTPUT_DIR) / "audio_segments"
 output_audio_dir.mkdir(parents=True, exist_ok=True)
-
-
-csv_name = Path(INPUT_CSV).stem
-output_csv = INPUT_CSV.replace(".csv", ".segments.csv")
 
 
 df = pd.read_csv(INPUT_CSV)
@@ -40,6 +34,7 @@ for idx, row in tqdm(df.iterrows(), total=len(df)):
 
     start_time = float(row["startTime"])
     end_time = float(row["endTime"])
+    channel = int(row["channel"])
 
     duration = end_time - start_time
 
@@ -57,14 +52,21 @@ for idx, row in tqdm(df.iterrows(), total=len(df)):
         "-y",
         "-i",
         str(input_audio),
+
+        # chọn channel
+        "-map_channel",
+        f"0.0.{channel}",
+
         "-ss",
         str(start_time),
         "-to",
         str(end_time),
+
         "-ar",
         "16000",
         "-ac",
         "1",
+
         str(output_audio),
     ]
 
@@ -85,9 +87,7 @@ for idx, row in tqdm(df.iterrows(), total=len(df)):
 
 new_df = pd.DataFrame(new_rows)
 
-new_df.to_csv(output_csv, index=False)
+new_df.to_csv(OUTPUT_CSV, index=False)
 
-print(f"Saved CSV: {output_csv}")
-print(f"Saved audio dir: {output_audio_dir}")
-
+print(f"Saved CSV: {OUTPUT_CSV}")
 print(f"Saved audio dir: {output_audio_dir}")
