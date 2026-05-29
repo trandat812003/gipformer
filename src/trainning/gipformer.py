@@ -1,21 +1,74 @@
 '''
 export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/egs:/home/trandat/Documents/gipformer/egs/librispeech/ASR/zipformer:$PYTHONPATH
 
-# Fine-tune without mux (i.e not mixing with original training data):
+# Fine-tune with CTC (recommended):
+# NOTE: base-lr must be very low (1e-4 ~ 5e-5) when finetune-ckpt was trained
+# WITHOUT ctc (use_ctc=0), because the CTC head is randomly initialized and
+# will produce huge gradients with high LR, causing grad_scale to collapse.
 python -m src.trainning.gipformer \
   --world-size 1 \
-  --num-epochs 30 \
+  --num-epochs 8 \
   --start-epoch 1 \
   --use-fp16 1 \
-  --use-ctc 0 \
+  --use-ctc 1 \
+  --use-transducer 1 \
   --do-finetune 1 \
   --finetune-ckpt /media/trandat/Data/model/gipformer/epoch-35-avg-6.pt \
   --bpe-model /media/trandat/Data/model/gipformer/bpe.model \
   --manifest-dir /home/trandat/Documents/gipformer/data/manifests \
-  --base-lr 0.0045 \
+  --base-lr 1e-4 \
   --use-mux 0 \
-  --exp-dir zipformer/exp_finetune \
-  --max-duration 40
+  --exp-dir zipformer/exp_finetune_ctc1 \
+  --max-duration 24
+
+# Fine-tune without CTC (transducer only, ckpt-compatible):
+python -m src.trainning.gipformer \
+  --world-size 1 \
+  --num-epochs 8 \
+  --start-epoch 1 \
+  --use-fp16 1 \
+  --use-ctc 0 \
+  --use-transducer 1 \
+  --do-finetune 1 \
+  --finetune-ckpt /media/trandat/Data/model/gipformer/epoch-35-avg-6.pt \
+  --bpe-model /media/trandat/Data/model/gipformer/bpe.model \
+  --manifest-dir /home/trandat/Documents/gipformer/data/manifests \
+  --base-lr 1e-4 \
+  --use-mux 0 \
+  --exp-dir zipformer/exp_finetune_notctc \
+  --max-duration 24
+
+
+python -m src.trainning.gipformer \
+  --world-size 1 \
+  --num-epochs 6 \
+  --start-epoch 1 \
+  --use-fp16 1 \
+  --do-finetune 1 \
+  --finetune-ckpt /home/voice/stt/models/gipformer/epoch-35-avg-6.pt \
+  --bpe-model /home/voice/stt/models/gipformer/bpe.model \
+  --manifest-dir /home/jovyan/gipformer/data/manifests \
+  --base-lr 1e-4 \
+  --use-mux 0 \
+  --max-duration 100 \
+  --exp-dir zipformer/exp_finetune_nomux_safe
+
+
+python -m src.trainning.gipformer \
+  --world-size 1 \
+  --num-epochs 6 \
+  --start-epoch 1 \
+  --use-fp16 1 \
+  --use-ctc 1 \
+  --use-transducer 1 \
+  --do-finetune 1 \
+  --finetune-ckpt /media/trandat/Data/model/gipformer/epoch-35-avg-6.pt \
+  --bpe-model /media/trandat/Data/model/gipformer/bpe.model \
+  --manifest-dir /home/trandat/Documents/gipformer/data/manifests \
+  --base-lr 1e-4 \
+  --use-mux 0 \
+  --exp-dir zipformer/exp_finetune_ctc1 \
+  --max-duration 24
 '''
 
 import logging
@@ -84,7 +137,10 @@ def run(rank, world_size, args):
     else:
         tb_writer = None
 
-    model, sp, fbank, device = load_model()
+    model, sp, fbank, device = load_model(
+        use_ctc=bool(params.use_ctc),
+        use_transducer=bool(params.use_transducer),
+    )
 
     # <blk> is defined in local/train_bpe_model.py
     params.blank_id = sp.piece_to_id("<blk>")

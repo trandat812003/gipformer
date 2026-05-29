@@ -34,7 +34,7 @@ model_paths = {
 }
 
 
-def load_model():
+def load_model(use_ctc: bool = False, use_transducer: bool = True):
     from egs.librispeech.ASR.zipformer.train import get_model, get_params
 
     params = get_params()
@@ -61,8 +61,8 @@ def load_model():
         'causal': False, 
         'chunk_size': '16,32,64,-1', 
         'left_context_frames': '64,128,256,-1', 
-        'use_transducer': True, 
-        'use_ctc': False, 
+        'use_transducer': use_transducer,
+        'use_ctc': use_ctc,
         'use_attention_decoder': False, 
         'use_cr_ctc': False
     })

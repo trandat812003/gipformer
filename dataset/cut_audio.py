@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 INPUT_CSV = "/home/trandat/Documents/gipformer/dataset/data.csv"
 AUDIO_DIR = "/media/trandat/Data"
-OUTPUT_DIR = "/media/trandat/Data/bidv"
+OUTPUT_DIR = "/media/trandat/Data/bidv54"
 OUTPUT_CSV = "/home/trandat/Documents/gipformer/dataset/data.segments.csv"
 
 output_audio_dir = Path(OUTPUT_DIR) / "audio_segments"
@@ -79,7 +79,7 @@ for idx, row in tqdm(df.iterrows(), total=len(df)):
 
     new_row = row.to_dict()
 
-    new_row["file_path"] = f"bidv/audio_segments/{output_name}"
+    new_row["file_path"] = f"bidv54/audio_segments/{output_name}"
     new_row["duration"] = duration
 
     new_rows.append(new_row)

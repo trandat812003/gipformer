@@ -25,7 +25,7 @@ ln -s /tmp/icefall/egs egs
 
 # finetune
 ```bash
-export PYTHONPATH=/home/trandat/Documents/gipformer/icefall:/home/trandat/Documents/gipformer/egs:/home/trandat/Documents/gipformer/egs/librispeech/ASR/zipformer:$PYTHONPATH
+export PYTHONPATH=/tmp/icefall/icefall:/tmp/icefall/egs:/tmp/icefall/egs/librispeech/ASR/zipformer:$PYTHONPATH
 ```
 
 ```bash
